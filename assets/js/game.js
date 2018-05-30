@@ -78,7 +78,7 @@ function preload ()
 
 function create() {
     createThis = this;
-    this.physics.world.setBounds(0, 0, 1600, 1200);
+    this.physics.world.setBounds(0, 0, width*widthMultiplier, height*heightMulitplier);
 
     this.add.tileSprite(0, 0, width*widthMultiplier, height*heightMulitplier, "bg").setOrigin(0,0);
 
