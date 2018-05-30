@@ -8,12 +8,17 @@ const theoreticalFramerate = 60;
 const mainCamZoom = 1;
 const miniCamZoom = 4;
 const playerSize = 32;
+const housesJSON = [
+    {x: 500, y:500, width: 100, height: 200},
+    {x: 750, y:750, width: 100, height: 200}
+];
 
 
 let playerAngle;
 let player;
 const playerVelocity = 500;
 let bullets = [];
+let houses = [];
 let camera;
 let minimapCamera;
 let createThis;
@@ -71,13 +76,23 @@ let game = new Phaser.Game(config);
 
 function preload ()
 {
+    this.load.spritesheet('bullet', 'assets/media/bullet.png', { frameWidth: 16, frameHeight: 9 });
+    this.load.image('inside', 'assets/media/house_inside.jpeg');
     this.load.image('player', 'assets/media/player.png');
-    this.load.image('bullet', 'assets/media/bullet.png');
     this.load.image('bg', 'assets/media/background.png');
+    this.load.image('house', 'assets/media/house.png');
 }
 
 function create() {
     createThis = this;
+
+    this.anims.create({
+        key: 'bulletAnim',
+        frames: createThis.anims.generateFrameNumbers('bullet'),
+        frameRate: 10,
+        repeat: -1
+    });
+
     this.physics.world.setBounds(0, 0, width*widthMultiplier, height*heightMulitplier);
 
     this.add.tileSprite(0, 0, width*widthMultiplier, height*heightMulitplier, "bg").setOrigin(0,0);
@@ -95,6 +110,17 @@ function create() {
     player.setOrigin(0.5, 0.5).setDisplaySize(playerSize, playerSize).setCollideWorldBounds(true).setDrag(playerVelocity*5,playerVelocity*5);
     player.setMaxVelocity(playerVelocity);
 
+    initHouses();
+
+    houses.forEach(function (house) {
+        createThis.physics.add.collider(player, house.right);
+        createThis.physics.add.collider(player, house.left);
+        function onOverlap(player, house) {
+            //TODO
+        }
+        createThis.physics.add.overlap(player, house.house, onOverlap, null, null);
+    });
+
     //CAMERA STUFF\\
     camera = this.cameras.main;
     camera.setSize(width/mainCamZoom, height/mainCamZoom);
@@ -108,17 +134,33 @@ function create() {
     minimapCamera.startFollow(player);
 
 
-    var rect = new Phaser.Geom.Rectangle(width-width/miniCamZoom-borderSize-offset, offset, width/miniCamZoom+borderSize*2, height/miniCamZoom+borderSize*2);
-    var graphics = this.add.graphics();
+    let rect = new Phaser.Geom.Rectangle(width-width/miniCamZoom-borderSize-offset, offset, width/miniCamZoom+borderSize*2, height/miniCamZoom+borderSize*2);
+    let graphics = this.add.graphics();
     graphics.strokeRectShape(rect).setScrollFactor(0);
+
+}
+
+function initHouses() {
+    housesJSON.forEach(function (houseObject) {
+        let house = createThis.physics.add.sprite(houseObject.x + houseObject.width/2,houseObject.y,'house').setDisplaySize(houseObject.width, houseObject.height);
+        let left = createThis.physics.add.sprite(houseObject.x,houseObject.y,'house').setDisplaySize(1, houseObject.height);
+        let right = createThis.physics.add.sprite(houseObject.x+houseObject.width,houseObject.y,'house').setDisplaySize(1, houseObject.height);
+
+        house.enableBody(false);
+        left.setImmovable(true);
+        right.setImmovable(true);
+
+        houses.push({house: house, right: right, left: left});
+    })
 }
 
 function fire() {
     let shotsPerSecond = 3;
     shotCooldown = theoreticalFramerate/shotsPerSecond;
     let bullet = createThis.physics.add.sprite(player.x,player.y,'bullet');
-    createThis.physics.moveTo(bullet, pointer.position.x+camera.scrollX, pointer.position.y+camera.scrollY,1000);
-    //bullets.add(bullet);
+    bullet.rotation = playerAngle;
+    createThis.physics.moveTo(bullet, pointer.position.x+camera.scrollX, pointer.position.y+camera.scrollY,750);
+    bullets.push(bullet);
 }
 
 function pickup() {
