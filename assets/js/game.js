@@ -30,6 +30,7 @@ let pointer;
 let shotCooldown = 0;
 let keyboard;
 let debugText;
+let squirelText;
 
 function initViewportHW() {
 
@@ -162,6 +163,7 @@ function create() {
     camera = this.cameras.main;
     camera.setSize(width/mainCamZoom, height/mainCamZoom);
     camera.startFollow(player);
+    camera.setZoom(0.3);
 
     const borderSize = 1;
     const offset = 20;
@@ -177,7 +179,8 @@ function create() {
 
     //DEBUG STUFF\\
 
-    debugText = this.add.text(width/2, height/10, game.loop.actualFps, { fontFamily: 'Arial', fontSize: 18, color: '#000000' }).setScrollFactor(0,0);
+    debugText = this.add.text(width/2, height/10, game.loop.actualFps, { fontFamily: 'Arial', fontSize: 18, color: '#FFFFFF' }).setScrollFactor(0,0);
+    squirelText = this.add.text(50, 50,'', { fontFamily: 'Arial', fontSize: 50, color: '#FFFFFF' }).setScrollFactor(0,0);
 
 }
 
@@ -191,6 +194,7 @@ function createPlayer() {
     player.setDataEnabled();
     player.data.set('hp',playerHp);
     player.data.set('name',playerName+players.getChildren().length);
+    player.disableBody();//TEMPSQUIRELTEST
 
     player.on('changedata', function (player, key, value, resetValue) {
         if (key === 'hp' && value <= 0)
@@ -213,10 +217,12 @@ function initPlayers() {
         //TODO
 
         for(let i =0; i<50; i++){
-            let temp = createThis.physics.add.sprite(i*32, 50, 'squirel');
-            console.log(temp);
-            temp.setVelocityX(500);
-            temp.setVelocityY(500);
+            let temp = createThis.physics.add.sprite(i*60, 50, 'squirel');
+            if(i<25){
+                temp.setVelocityX(500);
+            }else{
+                temp.setVelocityY(500);
+            }
             temp.setBounce(1);
             temp.setCollideWorldBounds(true);
             temp.anims.play('squirelAnim');
@@ -327,6 +333,28 @@ function destroyBullet(bullet) {
 
 function update() {
     debugText.setText(game.loop.actualFps);
+
+    let diags = 0;
+    let horiz = 0;
+    let verti = 0;
+
+    players.getChildren().forEach(function (child) {
+        if(child.body.velocity.x!=0&&child.body.velocity.y!=0){
+            diags++;
+        }else if(child.body.velocity.x!=0&&child.body.velocity.y==0){
+            horiz++;
+        }else if(child.body.velocity.x==0&&child.body.velocity.y!=0){
+            verti++;
+        }
+    });
+
+    squirelText.setText(
+        `diagonal squirels: ${diags} : ${diags/50*100}%\n
+horizontal squirels: ${horiz} : ${horiz/50*100}%\n
+vertical squirels: ${verti} : ${verti/50*100}%\n
+still squirels: ${50 - (diags+horiz+verti)} : ${(50 - (diags+horiz+verti))/50*100}%`
+    );
+
     bullets.getChildren().map(bullet=> bullet.data.set('range',bullet.data.get('range')-1));
 
     //by drawing first and then setting the texture won't flicker, only the true/false value changes behind the scenes
