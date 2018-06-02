@@ -1,3 +1,49 @@
+:root {
+    --blockHeight: 10vh;
+    --blockWidth: 30vw;
+    --primaryBackground: #111111;
+    --secondaryBackground: #444444;
+    --borderColor: #666666;
+    --hoverColor: #888888;
+    --errorColor: #550000;
+}
+
 body{
-    background-color: #000000;
+    background-color: var(--primaryBackground);
+    font-family: "Agency FB";
+    font-weight: bold;
+}
+h1{
+    color: var(--borderColor);
+    text-align: center;
+    font-size: calc(var(--blockHeight)*3/4);
+    margin: 1vh;
+}
+input:invalid{
+    background-color: var(--errorColor);
+}
+.square{
+    font-family: "Agency FB";
+    background-color: var(--secondaryBackground);
+    width: var(--blockWidth);
+    height: var(--blockHeight);
+    display: inline-block;
+    border: 1vw var(--borderColor) solid;
+    margin: 1vw;
+    padding: 0;
+    text-align: center;
+    font-size: calc(var(--blockHeight)/2);
+}
+.flex-row{
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    width: calc((var(--blockWidth)*2) + 8vw);
+    height: 100%;
+    line-height:var(--blockHeight);
+    margin: auto;
+}
+.square:hover{
+    border: 1vw var(--hoverColor);
+    border-style: double ridge;
 }

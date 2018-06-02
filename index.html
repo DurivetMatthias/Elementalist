@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v-bind="http://www.w3.org/1999/xhtml" xmlns:v-on="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Start</title>
+    <link rel="stylesheet" href="assets/css/reset.css" type="text/css">
+    <link rel="stylesheet" href="assets/css/screen.css" type="text/css">
+</head>
+<body>
+    <section id="mainPage">
+
+    </section>
+    <section id="keybinds">
+        <h1>{{message}}</h1>
+        <div class="flex-row" v-for="(value, key) in keybindObject">
+            <label class="square" v-bind:for="key" v-on:click="listenForKeybind(key)">{{key}}</label>
+            <div class="square" v-bind:id="key" v-on:click="listenForKeybind(key)">{{value}}</div>
+        </div>
+    </section>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js" rel="script" type="application/javascript"></script>
+<script src="assets/js/pregame.js" rel="script" type="application/javascript"></script>
+</body>
+</html>

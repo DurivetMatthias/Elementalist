@@ -146,7 +146,7 @@ function create() {
 
     this.add.tileSprite(0, 0, width*widthMultiplier, height*heightMulitplier, "bg").setOrigin(0,0);
 
-    keyboard ={
+    keyboard = {
         up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
         down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
         right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
@@ -219,9 +219,9 @@ function initPlayers() {
         for(let i =0; i<50; i++){
             let temp = createThis.physics.add.sprite(i*60, 50, 'squirel');
             if(i<25){
-                temp.setVelocityX(500);
+                temp.setVelocityX(1000);
             }else{
-                temp.setVelocityY(500);
+                temp.setVelocityY(1000);
             }
             temp.setBounce(1);
             temp.setCollideWorldBounds(true);
