@@ -17,33 +17,54 @@ h1{
     color: var(--borderColor);
     text-align: center;
     font-size: calc(var(--blockHeight)*3/4);
-    margin: 1vh;
+    margin: 5vh auto;
 }
-input:invalid{
+ul{
+    width: 50vw;
+    margin: 30vh auto auto;
+    text-align: center;
+    line-height: var(--blockHeight);
+}
+li{
+    width: 50vw;
+    height: var(--blockHeight);
+    margin-top: 10vh;
+}
+button{
+    width: 68vw;
+    margin-bottom:10vh;
+    margin-top: 5vh;
+}
+.centerText{
+    text-align: center;
+}
+.invalid{
     background-color: var(--errorColor);
 }
-.square{
-    font-family: "Agency FB";
+.colored{
     background-color: var(--secondaryBackground);
+    border: 1vw var(--borderColor) solid;
+    text-align: center;
+    font-size: calc(var(--blockHeight)/2);
+    font-family: "Agency FB";
+}
+.square{
     width: var(--blockWidth);
     height: var(--blockHeight);
     display: inline-block;
-    border: 1vw var(--borderColor) solid;
     margin: 1vw;
-    padding: 0;
-    text-align: center;
-    font-size: calc(var(--blockHeight)/2);
+    padding: 0 10px;
 }
 .flex-row{
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
-    width: calc((var(--blockWidth)*2) + 8vw);
+    width: calc((var(--blockWidth)*2) + 8vw + 40px);
     height: 100%;
     line-height:var(--blockHeight);
     margin: auto;
 }
-.square:hover{
+.colored:hover{
     border: 1vw var(--hoverColor);
     border-style: double ridge;
 }

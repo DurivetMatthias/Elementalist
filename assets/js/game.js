@@ -17,6 +17,7 @@ const playerHp = 100;
 const playerName = 'player-';
 
 let game;
+let keybindPromise;
 let playerAngle;
 let player;
 let players;
@@ -31,6 +32,7 @@ let shotCooldown = 0;
 let keyboard;
 let debugText;
 let squirelText;
+let keybindingObject;
 
 function initViewportHW() {
 
@@ -102,6 +104,7 @@ function goFullscreen() {
 }
 
 document.addEventListener('DOMContentLoaded',function () {
+    keybindPromise = fetchKeybindsObject();
     startGame();
 });
 
@@ -116,6 +119,18 @@ function preload ()
 }
 function create() {
     createThis = this;
+
+    keyboard = {up: null, down: null, right: null, left: null, pickup: null, fullscreen: null, fire: null};
+    keybindPromise.then(function (data) {
+        console.log(data);
+        keyboard.up = createThis.input.keyboard.addKey(data.up.code);
+        keyboard.down = createThis.input.keyboard.addKey(data.down.code);
+        keyboard.right = createThis.input.keyboard.addKey(data.right.code);
+        keyboard.left = createThis.input.keyboard.addKey(data.left.code);
+        keyboard.pickup = createThis.input.keyboard.addKey(data.pickup.code);
+        keyboard.fullscreen = createThis.input.keyboard.addKey(data.fullscreen.code);
+        keyboard.fire = createThis.input.keyboard.addKey(data.fire.code);
+    });
 
     this.anims.create({
         key: 'bulletAnim',
@@ -146,13 +161,6 @@ function create() {
 
     this.add.tileSprite(0, 0, width*widthMultiplier, height*heightMulitplier, "bg").setOrigin(0,0);
 
-    keyboard = {
-        up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
-        down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
-        right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
-        left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
-        pickup: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F),
-    };
     pointer = game.input.activePointer;
 
     initPlayers();
@@ -163,7 +171,6 @@ function create() {
     camera = this.cameras.main;
     camera.setSize(width/mainCamZoom, height/mainCamZoom);
     camera.startFollow(player);
-    camera.setZoom(0.3);
 
     const borderSize = 1;
     const offset = 20;
@@ -172,7 +179,6 @@ function create() {
     minimapCamera.setBackgroundColor(0x00FF00);
     minimapCamera.startFollow(player);
 
-
     let rect = new Phaser.Geom.Rectangle(width-width/miniCamZoom-borderSize-offset, offset, width/miniCamZoom+borderSize*2, height/miniCamZoom+borderSize*2);
     let graphics = this.add.graphics();
     graphics.strokeRectShape(rect).setScrollFactor(0);
@@ -180,8 +186,7 @@ function create() {
     //DEBUG STUFF\\
 
     debugText = this.add.text(width/2, height/10, game.loop.actualFps, { fontFamily: 'Arial', fontSize: 18, color: '#FFFFFF' }).setScrollFactor(0,0);
-    squirelText = this.add.text(50, 50,'', { fontFamily: 'Arial', fontSize: 50, color: '#FFFFFF' }).setScrollFactor(0,0);
-
+    //squirelText = this.add.text(50, 50,'', { fontFamily: 'Arial', fontSize: 50, color: '#FFFFFF' }).setScrollFactor(0,0);
 }
 
 function createPlayer() {
@@ -194,7 +199,6 @@ function createPlayer() {
     player.setDataEnabled();
     player.data.set('hp',playerHp);
     player.data.set('name',playerName+players.getChildren().length);
-    player.disableBody();//TEMPSQUIRELTEST
 
     player.on('changedata', function (player, key, value, resetValue) {
         if (key === 'hp' && value <= 0)
@@ -216,7 +220,7 @@ function initPlayers() {
     function addOtherPlayers() {
         //TODO
 
-        for(let i =0; i<50; i++){
+        /*for(let i =0; i<50; i++){
             let temp = createThis.physics.add.sprite(i*60, 50, 'squirel');
             if(i<25){
                 temp.setVelocityX(1000);
@@ -239,7 +243,7 @@ function initPlayers() {
             });
 
             players.add(temp);
-        }
+        }*/
 
         createPlayer();
     }
@@ -334,7 +338,7 @@ function destroyBullet(bullet) {
 function update() {
     debugText.setText(game.loop.actualFps);
 
-    let diags = 0;
+    /*let diags = 0;
     let horiz = 0;
     let verti = 0;
 
@@ -353,7 +357,7 @@ function update() {
 horizontal squirels: ${horiz} : ${horiz/50*100}%\n
 vertical squirels: ${verti} : ${verti/50*100}%\n
 still squirels: ${50 - (diags+horiz+verti)} : ${(50 - (diags+horiz+verti))/50*100}%`
-    );
+    );*/
 
     bullets.getChildren().map(bullet=> bullet.data.set('range',bullet.data.get('range')-1));
 

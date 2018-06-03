@@ -1,73 +1,67 @@
-let outerThis;
-const defaultBindings = {
-    up: 'ArrowUp',
-    down: 'ArrowDown',
-    right: 'ArrowRight',
-    left: 'ArrowLeft',
-    fire: 'mousedown',
-    pickup: 'f',
-    fullscreen: 'p',
-};
+let vueData;
 
 function valueAlreadyUsed(newValue) {
     let result = false;
-    Object.entries(outerThis.keybindObject).forEach(
-        ([key, value]) => {
-            //console.log(value === newValue);
-            if(value === newValue) result = true;
+    Object.entries(vueData.keybindObject).forEach(
+        obj => {
+            if(obj.name === newValue) result = true;
         }
     );
-    console.log(result);
-    return result
+    return result;
 }
 
-function changeKeybindTo(key) {
-    if(!valueAlreadyUsed(key)) {
-        outerThis.keybindObject[outerThis.listening] = key;
-        outerThis.listening = '';
-        outerThis.message = "click a keybind to change it";
+function changeKeybindTo(key, code) {
+    console.log(key, code);
+    if(vueData.listening===''){
+        //TODO_
+    }else if(!valueAlreadyUsed(key)) {
+        vueData.keybindObject[vueData.listening].name = key;
+        vueData.keybindObject[vueData.listening].code = code;
+        vueData.listening = '';
+        vueData.message = "click a keybind to change it";
     }else{
-        outerThis.message = `${key} is already in use try another key`;
+        vueData.message = `${key} is already in use try another key`;
     }
 }
 
 document.addEventListener('DOMContentLoaded',function () {
     let app = new Vue({
-        el: '#keybinds',
+        el: '#app',
         data: {
+            mainScreenActive: true,
             listening: '',
-            keybindObject: {
-                up: defaultBindings.up,
-                down: defaultBindings.down,
-                right: defaultBindings.right,
-                left: defaultBindings.left,
-                fire: defaultBindings.fire,
-                pickup: defaultBindings.pickup,
-                fullscreen: defaultBindings.fullscreen,
-            },
+            keybindObject: null,
             message: 'click a keybind to change it'
         },
         methods: {
-            listenForKeybind: function (key) {
+            startGame: function () {
+                keybindStorage.setItem(storageName, this.keybindObject);
+                window.location = "game.html";
+            },
+            listenForKeybind: function (key,code) {
                 this.listening = key;
-                this.keybindObject[key] = '|';
+                this.keybindObject[key].name = '|';
+                this.keybindObject[key].code = 0;
                 this.message = `listening for key: ${key}`;
 
             },
             initListener: function () {
                 document.addEventListener('keyup',function (event) {
-                    changeKeybindTo(event.key);
+                    changeKeybindTo(event.key, event.keyCode);
                 });
-                document.addEventListener('mousedown',function (event) {
-                    /*if(event.button === 0) outerThis.keybindObject[outerThis.listening] = 'mousedown';
-                    else if(event.button === 1) outerThis.keybindObject[outerThis.listening] = 'mousedown';
-                    else*/
-                    changeKeybindTo('mousedown');
+                document.addEventListener('mousedown',function () {
+                    changeKeybindTo('mousedown', 0);
                 })
+            },
+            initKeybinds: function () {
+                fetchKeybindsObject().then(function (data) {
+                    vueData.keybindObject = data;
+                });
             }
         },
         beforeMount(){
-            outerThis = this;
+            vueData = this;
+            this.initKeybinds();
             this.initListener();
         }
     });
