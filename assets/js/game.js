@@ -10,7 +10,6 @@ const housesJSON = [
     {x: 500, y:500, width: 100, height: 200},
     {x: 750, y:750, width: 100, height: 200}
 ];
-const bulletRangeInSeconds = 1;
 const playerVelocity = 500;
 const playerSize = 32;
 const playerHp = 100;
@@ -22,6 +21,7 @@ let playerAngle;
 let player;
 let players;
 let bullets;
+let scrolls;
 let houseWalls;
 let houses;
 let camera;
@@ -30,9 +30,12 @@ let createThis;
 let pointer;
 let shotCooldown = 0;
 let keyboard;
+let lastPickup = 0;
+
 let debugText;
 let squirelText;
 let keybindingObject;
+
 
 function initViewportHW() {
 
@@ -91,7 +94,7 @@ function startGame() {
 }
 
 document.addEventListener('keydown',function (event) {
-    if(event.key === 'p') goFullscreen();
+    if(event.keyCode === keyboard.fullscreen) goFullscreen();
 });
 
 function goFullscreen() {
@@ -116,13 +119,13 @@ function preload ()
     this.load.spritesheet('squirel', 'assets/media/squirel.png', { frameWidth: 32, frameHeight: 32 });
     this.load.image('player', 'assets/media/player.png');
     this.load.image('bg', 'assets/media/background.png');
+    this.load.image('temp', 'assets/media/house.png');
 }
 function create() {
     createThis = this;
 
     keyboard = {up: null, down: null, right: null, left: null, pickup: null, fullscreen: null, fire: null};
     keybindPromise.then(function (data) {
-        console.log(data);
         keyboard.up = createThis.input.keyboard.addKey(data.up.code);
         keyboard.down = createThis.input.keyboard.addKey(data.down.code);
         keyboard.right = createThis.input.keyboard.addKey(data.right.code);
@@ -166,6 +169,7 @@ function create() {
     initPlayers();
     initHouses();
     initBullets();
+    initScrolls();
 
     //CAMERA STUFF\\
     camera = this.cameras.main;
@@ -183,9 +187,11 @@ function create() {
     let graphics = this.add.graphics();
     graphics.strokeRectShape(rect).setScrollFactor(0);
 
+    scrollUI = this.add.text(width/2, height/8, player.data.get('scroll').data.get('type'), { fontFamily: 'Arial', fontSize: 24, color: '#FF0000' }).setScrollFactor(0,0);
+
     //DEBUG STUFF\\
 
-    debugText = this.add.text(width/2, height/10, game.loop.actualFps, { fontFamily: 'Arial', fontSize: 18, color: '#FFFFFF' }).setScrollFactor(0,0);
+    debugText = this.add.text(width/2, height/10, game.loop.actualFps, { fontFamily: 'Arial', fontSize: 24, color: '#FF0000' }).setScrollFactor(0,0);
     //squirelText = this.add.text(50, 50,'', { fontFamily: 'Arial', fontSize: 50, color: '#FFFFFF' }).setScrollFactor(0,0);
 }
 
@@ -199,6 +205,7 @@ function createPlayer() {
     player.setDataEnabled();
     player.data.set('hp',playerHp);
     player.data.set('name',playerName+players.getChildren().length);
+    player.data.set('scroll',null);
 
     player.on('changedata', function (player, key, value, resetValue) {
         if (key === 'hp' && value <= 0)
@@ -295,48 +302,12 @@ function initBullets() {
     createThis.physics.add.overlap(bullets, houseWalls, (bullet => bullet.destroy()), null, null);
 }
 
-function createBullet() {
-    let bullet = createThis.physics.add.sprite(player.x,player.y,'bullet');
-    bullet.setDataEnabled();
-    bullet.data.set('damage',25);
-    bullet.data.set('owner',player.data.get('name'));
-    bullet.data.set('range',game.loop.actualFps*bulletRangeInSeconds);
-    bullet.anims.play('bulletAnim');
-    bullet.on('changedata', function (bullet, key, value, resetValue) {
-        if (key === 'range' && value <= 0)
-        {
-            resetValue(0);
-            destroyBullet(bullet);
-        }
-    });
-
-    bullets.add(bullet);
-
-    return bullet;
-}
-
-function fire() {
-    let shotsPerSecond = 3;
-    shotCooldown = game.loop.actualFps/shotsPerSecond;
-    let bullet = createBullet();
-    bullet.rotation = playerAngle;
-    createThis.physics.moveTo(bullet, pointer.position.x+camera.scrollX, pointer.position.y+camera.scrollY,750);
-}
-
-function pickup() {
-    //TODO
-}
-
 function killPlayer(player) {
     player.destroy();
 }
 
-function destroyBullet(bullet) {
-    bullet.destroy();
-}
-
 function update() {
-    debugText.setText(game.loop.actualFps);
+    debugText.setText("angle: " + Phaser.Math.RadToDeg(playerAngle));
 
     /*let diags = 0;
     let horiz = 0;
@@ -359,7 +330,7 @@ vertical squirels: ${verti} : ${verti/50*100}%\n
 still squirels: ${50 - (diags+horiz+verti)} : ${(50 - (diags+horiz+verti))/50*100}%`
     );*/
 
-    bullets.getChildren().map(bullet=> bullet.data.set('range',bullet.data.get('range')-1));
+    bullets.getChildren().map(bullet=> bullet.data.set('timeAlive',bullet.data.get('timeAlive')+1));
 
     //by drawing first and then setting the texture won't flicker, only the true/false value changes behind the scenes
     houses.getChildren().forEach(function (houseObj) {
@@ -375,10 +346,12 @@ still squirels: ${50 - (diags+horiz+verti)} : ${(50 - (diags+horiz+verti))/50*10
         player.rotation = Phaser.Geom.Line.Angle(line);
     }
 
+    let scroll = player.data.get("scroll");
+    scroll.data.set(SCROLLOPTIONS.NECESSARY_PARAMETERS.COOLDOWN,scroll.data.get(SCROLLOPTIONS.NECESSARY_PARAMETERS.COOLDOWN) - 1);
+
     if(pointer.isDown){
-        if(shotCooldown <= 0) fire();
+        fire();
     }
-    shotCooldown--;
 
     if(keyboard.up.isDown) player.setVelocityY(-playerVelocity);
 
@@ -388,7 +361,12 @@ still squirels: ${50 - (diags+horiz+verti)} : ${(50 - (diags+horiz+verti))/50*10
 
     if(keyboard.left.isDown) player.setVelocityX(-playerVelocity);
 
-    if(keyboard.pickup.isDown) pickup();
+    if(keyboard.pickup.isDown) {
+        if(Date.now()-lastPickup >500){
+            lastPickup = Date.now();
+            pickupClosest();
+        }
+    };
 
     //if(keyboard.fullscreen.isDown) toggleFullscreen();
 }
