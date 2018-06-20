@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded',function () {
 
 function preload ()
 {
-    this.load.spritesheet('bullet', 'assets/media/bullet.png', { frameWidth: 16, frameHeight: 9 });
+    this.load.spritesheet('bullet', 'assets/media/bullet.png', { frameWidth: 16, frameHeight: 9 });//312/160 paper fire
     this.load.spritesheet('house', 'assets/media/house.png', { frameWidth: 1024, frameHeight: 640 });
     this.load.spritesheet('inside', 'assets/media/inside.png', { frameWidth: 1024, frameHeight: 640 });
     this.load.spritesheet('squirel', 'assets/media/squirel.png', { frameWidth: 32, frameHeight: 32 });
@@ -171,6 +171,13 @@ function create() {
     initBullets();
     initScrolls();
 
+    let app = new Vue({
+        el: '#healthOverlay',
+        data: {
+            healthText: player.data.get('hp') + "/100"
+        }
+    });
+
     //CAMERA STUFF\\
     camera = this.cameras.main;
     camera.setSize(width/mainCamZoom, height/mainCamZoom);
@@ -206,6 +213,10 @@ function createPlayer() {
     player.data.set('hp',playerHp);
     player.data.set('name',playerName+players.getChildren().length);
     player.data.set('scroll',null);
+    player.data.set('takeDamage', function (amount) {
+        document.documentElement.style.setProperty("--hpPercent", amount);
+        player.data.set('hp', player.data.get('hp')-amount);
+    });
 
     player.on('changedata', function (player, key, value, resetValue) {
         if (key === 'hp' && value <= 0)
@@ -223,42 +234,7 @@ function createPlayer() {
 function initPlayers() {
     players = createThis.add.group();
     player = createPlayer();
-
-    function addOtherPlayers() {
-        //TODO
-
-        /*for(let i =0; i<50; i++){
-            let temp = createThis.physics.add.sprite(i*60, 50, 'squirel');
-            if(i<25){
-                temp.setVelocityX(1000);
-            }else{
-                temp.setVelocityY(1000);
-            }
-            temp.setBounce(1);
-            temp.setCollideWorldBounds(true);
-            temp.anims.play('squirelAnim');
-            temp.setDataEnabled();
-            temp.data.set('hp',1);
-            temp.data.set('name','squirel');
-
-            temp.on('changedata', function (player, key, value, resetValue) {
-                if (key === 'hp' && value <= 0)
-                {
-                    resetValue(0);
-                    killPlayer(player);
-                }
-            });
-
-            players.add(temp);
-        }*/
-
-        createPlayer();
-    }
-    addOtherPlayers();
-
     players.setDepth(10);
-
-    createThis.physics.add.collider(players, players);
 }
 
 function initHouses() {
@@ -295,7 +271,7 @@ function initBullets() {
     bullets = createThis.add.group();
     createThis.physics.add.overlap(bullets, players, function (bullet,player) {
         if(bullet.data.get('owner')!==player.data.get('name')){
-            player.data.set('hp',player.data.get('hp')-bullet.data.get('damage'));
+            player.data.get('takeDamage')(bullet.data.get('damage'));
             destroyBullet(bullet);
         }
     }, null, null);

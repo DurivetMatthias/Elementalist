@@ -1,6 +1,6 @@
 :root {
-    --blockHeight: 10vh;
-    --blockWidth: 30vw;
+    --blockHeight: 7vh;
+    --blockWidth: 20vw;
     --primaryBackground: #111111;
     --secondaryBackground: #444444;
     --borderColor: #666666;
@@ -10,18 +10,21 @@
 
 body{
     background-color: var(--primaryBackground);
-    font-family: "Agency FB";
+    font-family: "Agency FB", Arial, sans-serif;
     font-weight: bold;
+    height: 70vh;
+    width: 98vw;
+    padding-top: 30vh;
 }
 h1{
     color: var(--borderColor);
     text-align: center;
     font-size: calc(var(--blockHeight)*3/4);
-    margin: 5vh auto;
+    margin: 0 auto;
 }
 ul{
     width: 50vw;
-    margin: 30vh auto auto;
+    margin: 0 auto;
     text-align: center;
     line-height: var(--blockHeight);
 }
@@ -31,7 +34,7 @@ li{
     margin-top: 10vh;
 }
 button{
-    width: 68vw;
+    width: var(--blockWidth);
     margin-bottom:10vh;
     margin-top: 5vh;
 }
@@ -46,7 +49,7 @@ button{
     border: 1vw var(--borderColor) solid;
     text-align: center;
     font-size: calc(var(--blockHeight)/2);
-    font-family: "Agency FB";
+    font-family: "Agency FB", Arial, sans-serif;
 }
 .square{
     width: var(--blockWidth);
@@ -67,4 +70,27 @@ button{
 .colored:hover{
     border: 1vw var(--hoverColor);
     border-style: double ridge;
+}
+.twitchStream{
+    padding: 1vh;
+    line-height: 5vh;
+    border: 1vw double;
+}
+.twitchStream img{
+    position: absolute;
+    height: 5vh;
+    width: 5vh;
+    padding-left: 1vw;
+}
+#twitch{
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: mediumpurple;
+    height: 80vh;
+    width: 30vw;
+    resize: both;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-base-color: black;
 }

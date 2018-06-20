@@ -105,6 +105,7 @@ function createBullet() {
     };
 
     let bullet = createThis.physics.add.sprite(player.x,player.y,'bullet');
+    console.log(bullet);
     bullet.setDataEnabled();
     bullet.data.set('owner',player.data.get('name'));
     bullet.data.set('timeAlive',0);
@@ -144,7 +145,7 @@ function createBullet() {
     switch(scrollInfo.effect){
         case SCROLLOPTIONS.EFFECT.GROWING:
             bullet.on('changedata', function (bullet, key, value, resetValue) {
-                if(key === 'timeAlive') bullet.setScale(1 + (value/5));
+                if(key === 'timeAlive') bullet.setScale(1 + (value/5)); // X = double size in X frames
             });
             break;
         case SCROLLOPTIONS.EFFECT.HOMING:

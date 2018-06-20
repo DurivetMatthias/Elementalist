@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Start</title>
     <link rel="stylesheet" href="assets/css/reset.css" type="text/css">
-    <link rel="stylesheet" href="assets/css/screen.css" type="text/css">
+    <link rel="stylesheet" href="assets/css/pregame.css" type="text/css">
 </head>
 <body>
     <div id="app">
@@ -13,6 +13,7 @@
                 <li class="colored" v-on:click="startGame">start game</li>
                 <li class="colored" v-on:click="mainScreenActive=false">change keybinds</li>
             </ul>
+
         </section>
         <section v-else>
             <h1>{{message}}</h1>
@@ -25,6 +26,8 @@
             </div>
         </section>
     </div>
+    <div id="twitch" draggable="true"></div>
+    <div></div>
 <script src="assets/js/localforage.min.js" rel="script" type="application/javascript"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js" rel="script" type="application/javascript"></script>
 <script src="assets/js/sharedJavascript.js" rel="script" type="application/javascript"></script>

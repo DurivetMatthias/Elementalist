@@ -1,0 +1,27 @@
+:root{
+    --hpPercent: 100;
+    --barHeight: 2vw;
+}
+#healthOverlay{
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+#healthWrap{
+    text-align: center;
+    font-family: "Agency FB", Arial, sans-serif;
+    font-weight: bold;
+    width: calc(100 * 0.2vw);
+    height: var(--barHeight);
+    line-height: var(--barHeight);
+    background-color: red;
+}
+#healthBar{
+    width: calc(var(--hpPercent) * 0.2vw);
+    height: var(--barHeight);
+    background-color: green;
+}
+#healthText{
+    position: absolute;
+    left: 9vw;
+}
