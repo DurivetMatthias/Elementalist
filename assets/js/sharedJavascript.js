@@ -105,7 +105,6 @@ function createBullet() {
     };
 
     let bullet = createThis.physics.add.sprite(player.x,player.y,'bullet');
-    console.log(bullet);
     bullet.setDataEnabled();
     bullet.data.set('owner',player.data.get('name'));
     bullet.data.set('timeAlive',0);
@@ -165,7 +164,6 @@ function createBullet() {
 
             bullet.on('changedata', function (bullet, key, value, resetValue) {
                 if(key === "activateEffect" && value){
-                    console.log("activated ", value);
                     if(Math.abs(Phaser.Math.RadToDeg(bullet._rotation)) <= 45
                         || Math.abs(Phaser.Math.RadToDeg(bullet._rotation)) >= 135 ){
                         bullet.setAccelerationY(randomAccel);

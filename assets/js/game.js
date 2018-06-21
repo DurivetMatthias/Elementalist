@@ -20,6 +20,7 @@ let keybindPromise;
 let playerAngle;
 let player;
 let players;
+let enemies;
 let bullets;
 let scrolls;
 let houseWalls;
@@ -35,7 +36,6 @@ let lastPickup = 0;
 let debugText;
 let squirelText;
 let keybindingObject;
-
 
 function initViewportHW() {
 
@@ -111,8 +111,7 @@ document.addEventListener('DOMContentLoaded',function () {
     startGame();
 });
 
-function preload ()
-{
+function preload () {
     this.load.spritesheet('bullet', 'assets/media/bullet.png', { frameWidth: 16, frameHeight: 9 });//312/160 paper fire
     this.load.spritesheet('house', 'assets/media/house.png', { frameWidth: 1024, frameHeight: 640 });
     this.load.spritesheet('inside', 'assets/media/inside.png', { frameWidth: 1024, frameHeight: 640 });
@@ -121,6 +120,7 @@ function preload ()
     this.load.image('bg', 'assets/media/background.png');
     this.load.image('temp', 'assets/media/house.png');
 }
+
 function create() {
     createThis = this;
 
@@ -167,9 +167,10 @@ function create() {
     pointer = game.input.activePointer;
 
     initPlayers();
-    initHouses();
-    initBullets();
-    initScrolls();
+    //initEnemies();
+    //initHouses();
+    //initBullets();
+    //initScrolls();
 
     let app = new Vue({
         el: '#healthOverlay',
@@ -194,12 +195,18 @@ function create() {
     let graphics = this.add.graphics();
     graphics.strokeRectShape(rect).setScrollFactor(0);
 
-    scrollUI = this.add.text(width/2, height/8, player.data.get('scroll').data.get('type'), { fontFamily: 'Arial', fontSize: 24, color: '#FF0000' }).setScrollFactor(0,0);
+   if( player.data.get('scroll')) scrollUI = this.add.text(width/2, height/8, player.data.get('scroll').data.get('type'), { fontFamily: 'Arial', fontSize: 24, color: '#FF0000' }).setScrollFactor(0,0);
 
     //DEBUG STUFF\\
 
-    debugText = this.add.text(width/2, height/10, game.loop.actualFps, { fontFamily: 'Arial', fontSize: 24, color: '#FF0000' }).setScrollFactor(0,0);
+    debugText = this.add.text(width/2, height/10, "", { fontFamily: 'Arial', fontSize: 24, color: '#FF0000' }).setScrollFactor(0,0);
     //squirelText = this.add.text(50, 50,'', { fontFamily: 'Arial', fontSize: 50, color: '#FFFFFF' }).setScrollFactor(0,0);
+}
+
+function initPlayers() {
+    players = createThis.add.group();
+    player = createPlayer();
+    players.setDepth(10);
 }
 
 function createPlayer() {
@@ -214,8 +221,8 @@ function createPlayer() {
     player.data.set('name',playerName+players.getChildren().length);
     player.data.set('scroll',null);
     player.data.set('takeDamage', function (amount) {
-        document.documentElement.style.setProperty("--hpPercent", amount);
         player.data.set('hp', player.data.get('hp')-amount);
+        document.documentElement.style.setProperty("--hpPercent", player.data.get('hp'));
     });
 
     player.on('changedata', function (player, key, value, resetValue) {
@@ -231,10 +238,41 @@ function createPlayer() {
     return player;
 }
 
-function initPlayers() {
-    players = createThis.add.group();
-    player = createPlayer();
-    players.setDepth(10);
+function initEnemies() {
+    enemies = createThis.add.group();
+
+    let enemy = createEnemy();
+}
+
+function createEnemy() {
+    let enemy = createThis.physics.add.sprite(width,height, 'squirel');
+    //enemy.anims.play('squirelAnim');
+    enemy.setOrigin(0.5,0.5);
+    enemy.setMaxVelocity(playerVelocity);
+    enemy.setCollideWorldBounds(true);
+    enemy.setDataEnabled();
+    enemy.data.set('hp', 100);
+    enemy.data.set('timeAlive', 0);
+    enemy.data.set('velocity', 200);
+    enemy.data.set('takeDamage', function (amount) {
+        enemy.data.set('hp', enemy.data.get('hp')-amount);
+    });
+    enemy.on('changedata', function (enemy, key, value, resetValue) {
+        if (key === 'timeAlive'&& value%50===0) {
+            let line = new Phaser.Geom.Line(enemy.x, enemy.y, player.x, player.y);
+            if(Phaser.Geom.Line.Length(line)>200) {
+                createThis.physics.moveTo(enemy, player.x+player.body.halfWidth, player.y+player.body.halfHeight, enemy.data.get('velocity'));
+            }else{
+                enemy.setVelocity(0);
+            }
+        }else if (key === 'hp' && value <= 0)
+        {
+            resetValue(0);
+            killEnemy(enemy);
+        }
+    });
+    enemies.add(enemy);
+    return enemy;
 }
 
 function initHouses() {
@@ -261,6 +299,8 @@ function initHouses() {
 
     createThis.physics.add.collider(players, houseWalls);
 
+    createThis.physics.add.collider(enemies, houseWalls);
+
     createThis.physics.add.overlap(players, houses, function (player, house) {
         if(!house.data.get('inside')) house.data.set('inside',true);
     }, null, null);
@@ -269,21 +309,30 @@ function initHouses() {
 
 function initBullets() {
     bullets = createThis.add.group();
-    createThis.physics.add.overlap(bullets, players, function (bullet,player) {
-        if(bullet.data.get('owner')!==player.data.get('name')){
+    createThis.physics.add.overlap(bullets, players, function (bullet, player) {
+        if (bullet.data.get('owner') !== player.data.get('name')) {
             player.data.get('takeDamage')(bullet.data.get('damage'));
             destroyBullet(bullet);
         }
     }, null, null);
     createThis.physics.add.overlap(bullets, houseWalls, (bullet => bullet.destroy()), null, null);
+
+    createThis.physics.add.overlap(enemies, bullets, function (enemy, bullet) {
+        enemy.data.get('takeDamage')(bullet.data.get('damage'));
+        destroyBullet(bullet);
+    },null,null);
 }
 
-function killPlayer(player) {
+function killPlayer() {
     player.destroy();
 }
 
+function killEnemy(enemy) {
+    enemy.destroy();
+}
+
 function update() {
-    debugText.setText("angle: " + Phaser.Math.RadToDeg(playerAngle));
+    debugText.setText("angle: " + Phaser.Math.RadToDeg(playerAngle)+"\nfps: "+game.loop.actualFps);
 
     /*let diags = 0;
     let horiz = 0;
@@ -306,10 +355,11 @@ vertical squirels: ${verti} : ${verti/50*100}%\n
 still squirels: ${50 - (diags+horiz+verti)} : ${(50 - (diags+horiz+verti))/50*100}%`
     );*/
 
-    bullets.getChildren().map(bullet=> bullet.data.set('timeAlive',bullet.data.get('timeAlive')+1));
+    if(bullets)bullets.getChildren().map(bullet=> bullet.data.set('timeAlive',bullet.data.get('timeAlive')+1));
+    if(enemies)enemies.getChildren().map(enemy=> enemy.data.set('timeAlive',enemy.data.get('timeAlive')+1));
 
     //by drawing first and then setting the texture won't flicker, only the true/false value changes behind the scenes
-    houses.getChildren().forEach(function (houseObj) {
+    if(houses)houses.getChildren().forEach(function (houseObj) {
         if(houseObj.data.get('inside')) houseObj.play('insideAnim');
         else houseObj.play('houseAnim');
 
@@ -317,32 +367,62 @@ still squirels: ${50 - (diags+horiz+verti)} : ${(50 - (diags+horiz+verti))/50*10
     });
 
     if(pointer){
-        var line = new Phaser.Geom.Line(player.x-camera.scrollX, player.y-camera.scrollY, pointer.position.x, pointer.position.y);
+        let line = new Phaser.Geom.Line(player.x-camera.scrollX, player.y-camera.scrollY, pointer.position.x, pointer.position.y);
         playerAngle = Phaser.Geom.Line.Angle(line);
         player.rotation = Phaser.Geom.Line.Angle(line);
     }
 
     let scroll = player.data.get("scroll");
-    scroll.data.set(SCROLLOPTIONS.NECESSARY_PARAMETERS.COOLDOWN,scroll.data.get(SCROLLOPTIONS.NECESSARY_PARAMETERS.COOLDOWN) - 1);
+    if(scroll)scroll.data.set(SCROLLOPTIONS.NECESSARY_PARAMETERS.COOLDOWN,scroll.data.get(SCROLLOPTIONS.NECESSARY_PARAMETERS.COOLDOWN) - 1);
 
     if(pointer.isDown){
         fire();
     }
 
-    if(keyboard.up.isDown) player.setVelocityY(-playerVelocity);
+    let diagonalSpeedPenalty = 2/3;
 
-    if(keyboard.down.isDown) player.setVelocityY(playerVelocity);
+    if(keyboard.up.isDown) {
+        if(keyboard.right.isDown&&!keyboard.left.isDown) {
+            player.setVelocityX(playerVelocity*diagonalSpeedPenalty);
+            player.setVelocityY(-playerVelocity*diagonalSpeedPenalty);
+        }
 
-    if(keyboard.right.isDown) player.setVelocityX(playerVelocity);
+        else if(keyboard.left.isDown&&!keyboard.right.isDown) {
+            player.setVelocityX(-playerVelocity*diagonalSpeedPenalty);
+            player.setVelocityY(-playerVelocity*diagonalSpeedPenalty);
+        }
 
-    if(keyboard.left.isDown) player.setVelocityX(-playerVelocity);
+        else if(!keyboard.down.isDown) {
+            player.setVelocityY(-playerVelocity);
+        }
+    }
+
+    else if(keyboard.down.isDown) {
+        if(keyboard.right.isDown&&!keyboard.left.isDown) {
+            player.setVelocityX(playerVelocity*diagonalSpeedPenalty);
+            player.setVelocityY(playerVelocity*diagonalSpeedPenalty);
+        }
+
+        else if(keyboard.left.isDown&&!keyboard.right.isDown) {
+            player.setVelocityX(-playerVelocity*diagonalSpeedPenalty);
+            player.setVelocityY(playerVelocity*diagonalSpeedPenalty);
+        }
+
+        else if(!keyboard.up.isDown) {
+            player.setVelocityY(playerVelocity);
+        }
+    }
+    else if(keyboard.right.isDown&&!keyboard.left.isDown) {
+        player.setVelocityX(playerVelocity);
+    }
+    else if(keyboard.left.isDown&&!keyboard.right.isDown) {
+        player.setVelocityX(-playerVelocity);
+    }
 
     if(keyboard.pickup.isDown) {
         if(Date.now()-lastPickup >500){
             lastPickup = Date.now();
             pickupClosest();
         }
-    };
-
-    //if(keyboard.fullscreen.isDown) toggleFullscreen();
+    }
 }
